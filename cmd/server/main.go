@@ -3,12 +3,9 @@ package main
 import (
 	"flag"
 	"log"
-	"net/http"
 	"os"
-	"os/signal"
 
-	"github.com/smatton/httpServerTemplate/pkg/http/handler"
-	"github.com/smatton/httpServerTemplate/pkg/http/webserver"
+	"github.com/smatton/httpServerTemplate/pkg/httpServer"
 	"github.com/smatton/httpServerTemplate/pkg/network"
 )
 
@@ -30,24 +27,10 @@ func main() {
 	}
 
 	// channels for gracefully shut down
-	done := make(chan bool, 1)
-	exit := make(chan os.Signal, 1)
 
-	signal.Notify(exit, os.Interrupt)
-	server, router := webserver.NewSimpleServer(logger, PORT)
-
-	// Set up routes
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// function for handling im here from servers
-		handler.Ping(w, r)
-	})
 	logger.Println("Listening on ", myIP+":"+PORT)
+	myserver := httpServer.New(PORT)
 
-	go webserver.GracefullShutdown(server, logger, exit, done)
+	myserver.Start()
 
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		logger.Fatalf("Could not listen on %s: %v\n", ":"+PORT, err)
-	}
-	<-done
-	logger.Println("Server stopped")
 }
